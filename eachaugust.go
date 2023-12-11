@@ -14,15 +14,29 @@ func Main() int {
 	return 0
 }
 
-func RandomPositiveIntegersUpTo(max int) <-chan int {
+type GeneratorOption func(*rand.Rand)
+
+// WithSeed is a functional option to set the seed for random number generation.
+func WithSeed(seed int64) GeneratorOption {
+	return func(rng *rand.Rand) {
+		rng.Seed(seed)
+	}
+}
+
+func RandomPositiveIntegersUpTo(max int, options ...GeneratorOption) <-chan int {
 	ch := make(chan int)
 
 	go func() {
 		defer close(ch)
 
-		randSeed := time.Now().UnixNano() // Seed with current time for randomness
-		randSrc := rand.NewSource(randSeed)
+		// Default seed with current time for randomness
+		randSrc := rand.NewSource(time.Now().UnixNano())
 		rng := rand.New(randSrc)
+
+		// Apply functional options
+		for _, option := range options {
+			option(rng)
+		}
 
 		for i := 0; i <= max; i++ {
 			ch <- rng.Intn(max + 1) // Generate a random integer in the range [0, max]
@@ -34,7 +48,7 @@ func RandomPositiveIntegersUpTo(max int) <-chan int {
 
 func run() {
 	max := 10
-	randomIntGenerator := RandomPositiveIntegersUpTo(max)
+	randomIntGenerator := RandomPositiveIntegersUpTo(max, WithSeed(int64(42)))
 
 	// Consume the generated random integers
 	for randomInt := range randomIntGenerator {
