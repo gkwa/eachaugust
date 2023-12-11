@@ -29,6 +29,8 @@ func RandomPositiveIntegersUpTo(max int, options ...GeneratorOption) <-chan int 
 	go func() {
 		defer close(ch)
 
+		seen := make(map[int]bool) // Hash to track seen values
+
 		// Default seed with current time for randomness
 		randSrc := rand.NewSource(time.Now().UnixNano())
 		rng := rand.New(randSrc)
@@ -38,8 +40,22 @@ func RandomPositiveIntegersUpTo(max int, options ...GeneratorOption) <-chan int 
 			option(rng)
 		}
 
-		for i := 0; i <= max; i++ {
-			ch <- rng.Intn(max + 1) // Generate a random integer in the range [0, max]
+		for {
+			randomNumber := rng.Intn(max + 1)
+			// Check if the number is already seen, if yes, generate a new one
+			for seen[randomNumber] {
+				randomNumber = rng.Intn(max + 1)
+			}
+
+			// Mark the number as seen
+			seen[randomNumber] = true
+
+			ch <- randomNumber // Generate a random integer in the range [0, max]
+
+			// If all possible numbers are seen, exit the loop
+			if len(seen) == max+1 {
+				break
+			}
 		}
 	}()
 
