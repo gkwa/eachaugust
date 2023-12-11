@@ -4,4 +4,4 @@ This is a description of my eachaugust.
 
 ** Usage
 
-To use my project, run this command: ./myproject --verbose
+To use my project, run this command: ./eachaugust --verbose
